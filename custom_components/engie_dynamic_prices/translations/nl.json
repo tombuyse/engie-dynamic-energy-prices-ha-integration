@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Engie Dynamische Prijzen",
+        "description": "Voeg Engie dynamische elektriciteitsprijzen toe aan Home Assistant. Prijzen worden dagelijks opgehaald via de Engie EPEX SPOT-feed en elke 30 minuten vernieuwd."
+      }
+    },
+    "abort": {
+      "already_configured": "Engie Dynamische Prijzen is al geconfigureerd."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "current_price": {
+        "name": "Huidige prijs"
+      },
+      "next_price": {
+        "name": "Prijs volgend uur"
+      },
+      "average_price": {
+        "name": "Gemiddelde prijs vandaag"
+      },
+      "min_price": {
+        "name": "Laagste prijs vandaag"
+      },
+      "max_price": {
+        "name": "Hoogste prijs vandaag"
+      }
+    }
+  }
+}

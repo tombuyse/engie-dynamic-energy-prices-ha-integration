@@ -1,0 +1,12 @@
+{
+  "domain": "engie_dynamic_prices",
+  "name": "Engie Dynamic Prices",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/tombuyse/engie-dynamic-energy-prices-ha-integration",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "requirements": ["openpyxl==3.1.5"],
+  "single_config_entry": true,
+  "version": "1.0.0"
+}

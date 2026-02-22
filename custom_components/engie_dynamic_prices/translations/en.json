@@ -1,0 +1,32 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Engie Dynamic Prices",
+        "description": "Add Engie dynamic electricity prices to Home Assistant. Prices are fetched daily from the Engie EPEX SPOT feed and updated every 30 minutes."
+      }
+    },
+    "abort": {
+      "already_configured": "Engie Dynamic Prices is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "current_price": {
+        "name": "Current price"
+      },
+      "next_price": {
+        "name": "Next hour price"
+      },
+      "average_price": {
+        "name": "Average price today"
+      },
+      "min_price": {
+        "name": "Lowest price today"
+      },
+      "max_price": {
+        "name": "Highest price today"
+      }
+    }
+  }
+}
