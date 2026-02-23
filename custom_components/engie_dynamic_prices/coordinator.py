@@ -5,6 +5,7 @@ import io
 import logging
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
+from typing import Optional
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -68,13 +69,17 @@ class EngieCoordinator(DataUpdateCoordinator[EngieData]):
             update_interval=SCAN_INTERVAL,
         )
         self._session = session
+        self._last_fetch_date: Optional[date] = None
 
     async def _async_update_data(self) -> EngieData:
-        # Return cached data if we already have today's prices — no API call needed.
+        # Return cached data if we already fetched today — no API call needed.
+        # We key on *fetch date* (not price_date) so that day-ahead prices
+        # published for tomorrow do not cause hourly re-fetches or prematurely
+        # replace today's average / min / max with tomorrow's values.
         # The coordinator still runs hourly so that current_price / next_price
         # sensors reflect the correct hour.
-        if self.data is not None and self.data.price_date == date.today():
-            _LOGGER.debug("Prices for %s already cached, skipping fetch", date.today())
+        if self._last_fetch_date == date.today() and self.data is not None:
+            _LOGGER.debug("Prices already fetched today (%s), skipping", date.today())
             return self.data
 
         try:
@@ -85,11 +90,14 @@ class EngieCoordinator(DataUpdateCoordinator[EngieData]):
             raise UpdateFailed(f"Error fetching Engie prices: {err}") from err
 
         try:
-            return await self.hass.async_add_executor_job(
+            result = await self.hass.async_add_executor_job(
                 EngieCoordinator._parse_xlsx, content
             )
         except Exception as err:
             raise UpdateFailed(f"Error parsing Engie prices: {err}") from err
+
+        self._last_fetch_date = date.today()
+        return result
 
     @staticmethod
     def _parse_xlsx(content: bytes) -> EngieData:
@@ -113,9 +121,13 @@ class EngieCoordinator(DataUpdateCoordinator[EngieData]):
             date_cell.date() if isinstance(date_cell, datetime) else date.today()
         )
 
-        # Data starts at row 5; column 2 holds the EUR/MWh price
+        # Data starts at row 5; column 2 holds the EUR/MWh price.
+        # Stop at 24 values so that day-ahead rows published in the same
+        # sheet do not skew average / min / max calculations.
         prices: list[float] = []
         for row in hourly_sheet.iter_rows(min_row=5, values_only=True):
+            if len(prices) >= 24:
+                break
             value = row[1]
             if isinstance(value, (int, float)):
                 prices.append(round(float(value) / 1000, 6))  # EUR/MWh → EUR/kWh
